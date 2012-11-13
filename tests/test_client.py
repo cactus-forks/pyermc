@@ -4,24 +4,25 @@ import lz4
 import pickle
 import unittest
 import mock
+import errno
+import socket
 from mock import sentinel
 from pyermc import memcache
 
 class TestClient(unittest.TestCase):
     def test_init(self):
         client = memcache.Client('1.2.3.4', 5678, connect_timeout=11,
-                                 timeout=22, server_max_key_length=33,
-                                 server_max_value_length=44, pickle=False,
-                                 cache_cas=True, debug=True)
+                                 timeout=22, max_key_length=33,
+                                 max_value_length=44, pickle=False,
+                                 cache_cas=True)
         self.assertEqual(client.host, '1.2.3.4')
         self.assertEqual(client.port, 5678)
         self.assertEqual(client.connect_timeout, 11)
         self.assertEqual(client.timeout, 22)
-        self.assertEqual(client.server_max_key_length, 33)
-        self.assertEqual(client.server_max_value_length, 44)
+        self.assertEqual(client.max_key_length, 33)
+        self.assertEqual(client.max_value_length, 44)
         self.assertFalse(client.pickle)
         self.assertTrue(client.cache_cas)
-        self.assertTrue(client.debug)
         self.assertIsNone(client._client)
         self.assertFalse(client._connected)
         self.assertEqual({}, client.cas_ids)
@@ -32,13 +33,12 @@ class TestClient(unittest.TestCase):
         self.assertEqual(client.port, 5678)
         self.assertEqual(client.timeout, 3)
         self.assertEqual(client.connect_timeout, 3)
-        self.assertEqual(client.server_max_key_length,
-                         memcache.SERVER_MAX_KEY_LENGTH)
-        self.assertEqual(client.server_max_value_length,
-                         memcache.SERVER_MAX_VALUE_LENGTH)
+        self.assertEqual(client.max_key_length,
+                         memcache.MAX_KEY_LENGTH)
+        self.assertEqual(client.max_value_length,
+                         memcache.MAX_VALUE_LENGTH)
         self.assertTrue(client.pickle)
         self.assertFalse(client.cache_cas)
-        self.assertFalse(client.debug)
         self.assertIsNone(client._client)
         self.assertFalse(client._connected)
         self.assertEqual({}, client.cas_ids)
@@ -69,7 +69,9 @@ class TestClient(unittest.TestCase):
         """
         client = memcache.Client('127.0.0.1', 11211)
         client._client = sentinel._client
+        client._client.sock = sentinel.sock
         client._connected = True
+        client._client.is_connected = mock.Mock(return_value=True)
         client.connect()
         self.assertIs(client._client, sentinel._client)
         self.assertTrue(client._connected)
@@ -111,7 +113,11 @@ class TestClient(unittest.TestCase):
         client._connected = True
         client._client = mock.Mock()
         client._client.is_connected = mock.Mock(return_value=True)
-        self.assertIsNone(client.is_connected())
+        client._client.sock = mock.Mock()
+        err = socket.error()
+        err.errno = errno.EAGAIN
+        client._client.sock.recv = mock.Mock(side_effect=err)
+        self.assertTrue(client.is_connected())
 
     def test_is_connected_client_is_not_connected(self):
         """is_connected() should return False if _client is not connected.
@@ -157,21 +163,10 @@ class TestClient(unittest.TestCase):
         self.assertEqual(client.cas_ids, {})
 
     def test_check_key(self):
-        client = memcache.Client('127.0.0.1', 11211, server_max_key_length=1)
+        client = memcache.Client('127.0.0.1', 11211, max_key_length=1)
         self.assertEqual(client.check_key('f'), 'f')
         with self.assertRaisesRegexp(memcache.MemcacheKeyError, 'length'):
             client.check_key('ff')
-        with self.assertRaisesRegexp(memcache.MemcacheKeyError, 'length'):
-            client.check_key('f', key_extra_len=1)
-
-    def test_check_key_tuple(self):
-        """check_key() should use the second item of key, if key is a tuple.
-        """
-        client = memcache.Client('127.0.0.1', 11211)
-        mock_key = mock.Mock(spec=tuple)
-        mock_key.__getitem__ = mock.Mock(return_value='foo')
-        self.assertEqual(client.check_key(mock_key), 'foo')
-        mock_key.__getitem__.assert_called_with(1)
 
     def test_check_key_empty(self):
         """check_key() should raise when the key is empty.
@@ -209,6 +204,7 @@ class TestClient(unittest.TestCase):
         """stats() should pass through to _client.stats()
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock.Mock()
         client._client.stats.return_value = sentinel.stats_result
         self.assertIs(client.stats(), sentinel.stats_result)
@@ -218,6 +214,7 @@ class TestClient(unittest.TestCase):
         """version() should pass through to _client.version()
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock.Mock()
         client._client.version.return_value = sentinel.version_result
         self.assertIs(client.version(), sentinel.version_result)
@@ -227,6 +224,7 @@ class TestClient(unittest.TestCase):
         """decr() should pass through to _client.decr()
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock.Mock()
         client._client.decr.return_value = sentinel.decr_result
         self.assertIs(client.decr('foo', 1), sentinel.decr_result)
@@ -236,6 +234,7 @@ class TestClient(unittest.TestCase):
         """incr() should pass through to _client.incr()
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock.Mock()
         client._client.incr.return_value = sentinel.incr_result
         self.assertIs(client.incr('foo', 1), sentinel.incr_result)
@@ -245,6 +244,7 @@ class TestClient(unittest.TestCase):
         """delete() should pass through to _client.delete()
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock.Mock()
         client._client.delete.return_value = sentinel.delete_result
         self.assertIs(client.delete('foo'), sentinel.delete_result)
@@ -254,6 +254,7 @@ class TestClient(unittest.TestCase):
         """flush_all() should pass through to _client.flush_all()
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock.Mock()
         client._client.flush_all.return_value = sentinel.flush_all_result
         self.assertIs(client.flush_all(), sentinel.flush_all_result)
@@ -261,6 +262,7 @@ class TestClient(unittest.TestCase):
 
     def test_add(self):
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         with mock.patch.object(client, '_set') as mock_set:
             client.add('foo', 1)
             client.add('foo', 1, time=2, min_compress_len=3)
@@ -310,21 +312,21 @@ class TestClient(unittest.TestCase):
     def test_val_to_store_info(self):
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info('value', 0)
-        self.assertEqual(result, (0, 5, 'value'))
+        self.assertEqual(result, (0, 'value'))
 
     def test_val_to_store_info_int(self):
         """_val_to_store_info() should convert int values to strings.
         """
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(1337, 0)
-        self.assertEqual(result, (memcache.Client._FLAG_INTEGER, 4, '1337'))
+        self.assertEqual(result, (memcache.Client._FLAG_INTEGER, '1337'))
 
     def test_val_to_store_info_long(self):
         """_val_to_store_info() should convert long values to strings.
         """
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(1337L, 0)
-        self.assertEqual(result, (memcache.Client._FLAG_LONG, 4, '1337'))
+        self.assertEqual(result, (memcache.Client._FLAG_LONG, '1337'))
 
     def test_val_to_store_info_pickle(self):
         """_val_to_store_info() should pickle value if not a str, int or long.
@@ -333,10 +335,9 @@ class TestClient(unittest.TestCase):
         pickled_value = pickle.dumps(value)
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(value, len(pickled_value))
-        self.assertEqual(len(result), 3)
+        self.assertEqual(len(result), 2)
         self.assertEqual(result[0], memcache.Client._FLAG_PICKLE)
-        self.assertEqual(result[1], len(pickled_value))
-        self.assertEqual(pickle.loads(result[2]), value)
+        self.assertEqual(pickle.loads(result[1]), value)
 
     def test_val_to_store_info_compress(self):
         """_val_to_store_info() should compress large values.
@@ -346,7 +347,7 @@ class TestClient(unittest.TestCase):
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(value, min_compress_len=1)
         self.assertEqual(result, (memcache.Client._FLAG_COMPRESSED,
-                                  len(compressed_value), compressed_value))
+                                  compressed_value))
 
     def test_value_to_store_info_compress_length(self):
         """ _val_to_store_info() should not use compressed values if too long.
@@ -359,24 +360,24 @@ class TestClient(unittest.TestCase):
         self.assertGreater(len(compressed_value), len(value))
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(value, min_compress_len=1)
-        self.assertEqual(result, (0, len(value), value))
+        self.assertEqual(result, (0, value))
 
     def test_val_to_store_info_compress_int(self):
         """_val_to_store_info() should not compress int values.
         """
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(1337, min_compress_len=1)
-        self.assertEqual(result, (memcache.Client._FLAG_INTEGER, 4, '1337'))
+        self.assertEqual(result, (memcache.Client._FLAG_INTEGER, '1337'))
 
     def test_val_to_store_info_compress_long(self):
         """_val_to_store_info() should not compress long values.
         """
         client = memcache.Client('127.0.0.1', 11211)
         result = client._val_to_store_info(1337L, min_compress_len=1)
-        self.assertEqual(result, (memcache.Client._FLAG_LONG, 4, '1337'))
+        self.assertEqual(result, (memcache.Client._FLAG_LONG, '1337'))
 
     def test_val_to_store_info_length(self):
-        client = memcache.Client('127.0.0.1', 11211, server_max_value_length=1)
+        client = memcache.Client('127.0.0.1', 11211, max_value_length=1)
         with self.assertRaises(memcache.MemcacheValueError):
             client._val_to_store_info('foo', 0)
 
@@ -388,7 +389,6 @@ class TestClient(unittest.TestCase):
         mock_connect = mock.Mock()
         mock_is_connected = mock.Mock(return_value=False)
         mock_val_to_store_info = mock.Mock(return_value=(sentinel.flags,
-                                                         sentinel.sval_len,
                                                          sentinel.sval))
         with mock.patch.multiple(client, _client=mock_client,
                                  _val_to_store_info=mock_val_to_store_info,
@@ -408,6 +408,7 @@ class TestClient(unittest.TestCase):
         mock_client = mock.Mock()
         mock_client.cas.return_value = sentinel.cas_result
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock_client
         client.cas_ids = {'key': sentinel.cas_id}
         self.assertIs(client._set('cas', 'key', 'val'), sentinel.cas_result)
@@ -420,6 +421,7 @@ class TestClient(unittest.TestCase):
         mock_client = mock.Mock()
         mock_client.set.return_value = sentinel.set_result
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         client._client = mock_client
         self.assertIs(client._set('cas', 'key', 'val'), sentinel.set_result)
         mock_client.set.assert_called_with('key', 'val', 0, 0)
@@ -482,6 +484,7 @@ class TestClient(unittest.TestCase):
 
     def test_private_get(self):
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         mock_client = mock.Mock()
         mock_client.some_cmd.return_value = (sentinel.value, sentinel.flags)
         mock_check_key = mock.Mock(return_value='some_key')
@@ -504,9 +507,11 @@ class TestClient(unittest.TestCase):
         """_get() should always return None for falsey responses.
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         for falsey_value in [None, False, 0, '']:
             mock_client = mock.Mock()
             mock_client.foo.return_value = falsey_value
+            client.is_connected = mock.Mock(return_value=True)
             client._client = mock_client
             result = client._get('foo', 'bar')
             self.assertIsNone(result)
@@ -516,9 +521,11 @@ class TestClient(unittest.TestCase):
         """_get() should always return None for falsey response values.
         """
         client = memcache.Client('127.0.0.1', 11211)
+        client.is_connected = mock.Mock(return_value=True)
         for falsey_value in [None, False, 0, '']:
             mock_client = mock.Mock()
-            mock_client.foo.return_value = (falsey_value, 0)
+            mock_client.foo = mock.Mock(return_value=(falsey_value, 0))
+            client.is_connected = mock.Mock(return_value=True)
             client._client = mock_client
             result = client._get('foo', 'bar')
             self.assertIsNone(result)
@@ -528,6 +535,7 @@ class TestClient(unittest.TestCase):
         """_get() should work properly for gets commands.
         """
         client = memcache.Client('127.0.0.1', 11211, cache_cas=True)
+        client.is_connected = mock.Mock(return_value=True)
         with mock.patch.object(client, '_recv_value') as mock_recv_value:
             mock_recv_value.return_value = sentinel.received_value
             mock_client = mock.Mock()
@@ -542,6 +550,7 @@ class TestClient(unittest.TestCase):
         """_get() should not cache cas ids if cache_cas is False.
         """
         client = memcache.Client('127.0.0.1', 11211, cache_cas=False)
+        client.is_connected = mock.Mock(return_value=True)
         with mock.patch.object(client, '_recv_value') as mock_recv_value:
             mock_recv_value.return_value = sentinel.received_value
             mock_client = mock.Mock()
@@ -586,6 +595,7 @@ class TestClient(unittest.TestCase):
         """_get_multi() should work properly for gets_multi commands.
         """
         client = memcache.Client('127.0.0.1', 11211, cache_cas=True)
+        client.is_connected = mock.Mock(return_value=True)
         with mock.patch.object(client, '_recv_value') as mock_recv_value:
             recv_value_results = {sentinel.value1: sentinel.received_value1,
                                   sentinel.value2: sentinel.received_value2}
@@ -607,6 +617,7 @@ class TestClient(unittest.TestCase):
         """_get_multi() should not cache cas_ids if cache_cas is False.
         """
         client = memcache.Client('127.0.0.1', 11211, cache_cas=False)
+        client.is_connected = mock.Mock(return_value=True)
         with mock.patch.object(client, '_recv_value') as mock_recv_value:
             recv_value_results = {sentinel.value1: sentinel.received_value1,
                                   sentinel.value2: sentinel.received_value2}

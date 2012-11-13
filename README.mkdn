@@ -1,7 +1,26 @@
-## pyermc - python ermahgerd! memcache client.
-
-![ermahgerd](http://i2.kym-cdn.com/photos/images/original/000/333/003/0d3.jpg)
+pyermc
+======
 
 ### oogah! Highly experimental!
 
+## About
+
+pyermc is a memcache client utilizing the [ultramemcache][1] driver. It is
+somewhat compatible with [python-memcached][2]. Full compatibility is not a
+design goal, however.
+
+## Features
+
+*   pickle support
+*   gevent/eventlet compatible (ultramemcache uses python socket)
+*   uses [lz4][3] for compression instead of gzip (fast)
+
+## Usage
+
+![ermahgerd](http://i2.kym-cdn.com/photos/images/original/000/333/003/0d3.jpg)
+
+
+[1]: https://github.com/esnme/ultramemcache
+[2]: http://www.tummy.com/Community/software/python-memcached/
+[3]: https://github.com/steeve/python-lz4
 

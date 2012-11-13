@@ -69,7 +69,7 @@ class TestPyErMC(unittest.TestCase):
             self.do_setget(1, key="this\x10has\x11control characters\x02")
 
     def test_long_key(self):
-        key = 'a'*pyermc.SERVER_MAX_KEY_LENGTH
+        key = 'a'*pyermc.MAX_KEY_LENGTH
         # this one is ok
         self.do_setget(1, key=key)
 
@@ -79,7 +79,7 @@ class TestPyErMC(unittest.TestCase):
             self.do_setget(1, key=key)
 
         ## same with unicodes
-        key = u'a'*pyermc.SERVER_MAX_KEY_LENGTH
+        key = u'a'*pyermc.MAX_KEY_LENGTH
         self.do_setget(1, key=key)
 
         key = key + u'a'
@@ -87,7 +87,7 @@ class TestPyErMC(unittest.TestCase):
             self.do_setget(1, key=key)
 
         # and no encoded
-        key = u'a'*pyermc.SERVER_MAX_KEY_LENGTH
+        key = u'a'*pyermc.MAX_KEY_LENGTH
         self.do_setget(1, key=key.encode('utf-8'))
 
         key = key + u'a'
@@ -96,7 +96,7 @@ class TestPyErMC(unittest.TestCase):
 
 
     def test_long_value(self):
-        val = 'a' * pyermc.SERVER_MAX_VALUE_LENGTH
+        val = 'a' * pyermc.MAX_VALUE_LENGTH
         self.do_setget(val)
 
         val = val + 'aaaaaa'
@@ -104,11 +104,7 @@ class TestPyErMC(unittest.TestCase):
             self.do_setget(val)
 
     def test_compression(self):
-        val = 'a' * pyermc.SERVER_MAX_VALUE_LENGTH
-        self.do_setget(val, min_compress_len=1)
-
-        # compressed. should fit
-        val = val + 'aaaaaa'
+        val = 'a' * pyermc.MAX_VALUE_LENGTH
         self.do_setget(val, min_compress_len=1)
 
     def test_delete(self):

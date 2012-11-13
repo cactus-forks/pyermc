@@ -17,4 +17,4 @@ del NullHandler
 
 from .memcache import (
     Client, MemcacheKeyError, MemcacheValueError,
-    SERVER_MAX_KEY_LENGTH, SERVER_MAX_VALUE_LENGTH)
+    MAX_KEY_LENGTH, MAX_VALUE_LENGTH)
