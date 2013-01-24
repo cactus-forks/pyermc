@@ -1,0 +1,9 @@
+See: pyermc/driver/base.py for required methods.
+
+It is recommended to subclass Driver, and override supported methods.
+
+example:
+
+    from pyermc.driver import Driver
+    class CustomProtocol(Driver):
+        pass

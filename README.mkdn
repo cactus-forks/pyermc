@@ -1,31 +1,157 @@
 pyermc
 ======
 
-### oogah! Highly experimental!
+pyermc is a memcache client library with support for "pluggable" driver
+backends.
 
 ## About
 
-pyermc is a memcache client utilizing the [ultramemcache][1] driver. It is
-somewhat compatible with [python-memcached][2]. Full compatibility is not a
-design goal, however.
+Current backends include a text protocol driver (default), a binary protocol
+driver, and a wrapped [ultramemcached][1] driver.
+
+While pyermc is somewhat compatible with [python-memcached][2], full
+compatibility is not a design goal.
+
+pyermc supports connecting to a single memcached instance (or server that
+speaks the memcached protocol). If you require multiple servers, consistent
+hashing, etc, then it is recommended to use [twemproxy][4] or similar.
+
+pyermc exposes connectivity faults, via exceptions, to the calling code. This
+is in contrast to python-memcached, which simply enters an 'ignore backend'
+state. Exposing underlying faults is often needed when working with queueing
+servers that support the memcache driver (such as [kestrel][5] and
+[darner][6]), as well as translation proxies like couchbase's [moxie][7]. If
+the old behavior is desired, there is an optional `error_as_miss` parameter
+that may be set as part of client creation.
+
+pyermc is currently tested against python2.7.
 
 ## Features
 
 *   pickle support
 *   gevent/eventlet compatible (ultramemcache uses python socket)
 *   uses [lz4][3] for compression instead of gzip (fast)
+*   selectable backend drivers
 
-## Benchmarks
+## Requirements
 
-To run the benchmark script, you will need to pip install python-memcached
-and manually clone mixpanel's [memcache_client][4] repo.
+*   python-lz4
+*   ultramemcache (optional, required only for ultramemcache backend)
 
 ## Usage
 
-![ermahgerd](http://i2.kym-cdn.com/photos/images/original/000/333/003/0d3.jpg)
+    >>> import pyermc
+    # create client and connect
+    >>> c = pyermc.Client(
+    ...     host='127.0.0.1',
+    ...     port=11211,
+    ...     disable_nagle=True,
+    ...     cache_cas=True)
+    # calling connect is option. if omitted, the client will connect
+    # during first request.
+    >>> c.connect()
 
+    # example set/get
+    >>> c.set('test', 'test string')
+    True
+    >>> c.get('test')
+    'test string'
+
+    # incr/decr example
+    >>> c.set("something", "1")  # memcached requires val used for incr/decr be a string
+    True
+    >>> c.incr("something")
+    2
+    >>> c.incr("something")
+    3
+    >>> c.decr("something")
+    2
+    >>> c.delete("something")
+    True
+
+    # check-and-set (cas) example
+    >>> c.set("testcas", 1)
+    True
+    # when client is created with cache_cas=True, the cas id in a gets
+    # response is stored internally.
+    >>> c.gets("testcas")
+    1
+    # this worked! it wasn't modified since.
+    >>> c.cas("testcas", 21)
+    True
+    # As expected, this fails, the previous line modified the value on the
+    # server and since we have the previous cas_id stored inside the client, it
+    # fails.
+    >>> c.cas("testcas", 21)
+    False
+    # you can manually clear all cached cas values
+    # c.reset_cas()
+
+    # add example
+    >>> c.add("testadd", "a")
+    True
+    >>> c.get("testadd")
+    'a'
+    # add only succeeds when the key is not already present in the server
+    >>> c.add("testadd", "b")
+    False
+
+    # test replace
+    # this only works if there is already a key on the server
+    >>> c.replace("testreplace", "c")
+    False
+    >>> c.set("testreplace", "yes")
+    True
+    >>> c.get("testreplace")
+    'yes'
+    >>> c.replace("testreplace", "no")
+    True
+    >>> c.get("testreplace")
+    'no'
+
+    # test append (prepend also works as you would expect)
+    >>> c.set("foo", "a")
+    True
+    >>> c.append("foo", "b")
+    True
+    >>> c.append("foo", "c")
+    True
+    >>> c.get("foo")
+    'abc'
+
+
+## Benchmarks
+
+To run the benchmark script, you will need to install python-memcached. A
+running memcached instance is also required (localhost, port 5555, and make
+sure no other valuable data is housed there, as the benchmark performs a
+`flush_all` at various stages).
+
+To run the benchmarks:
+
+    memcached -l 127.0.0.1 -p 55555 &
+    PYTHONPATH="." python benchmarks/bench.py
+    fg
+    ^C
+
+## Tests
+
+Similar to benchmarks, a memcached instance running on localhost and port 55555
+is needed. If not present, integration tests will be skipped. The tests perform
+`flush_all` at various stages, so ensure no valuable data is stored in the test
+instance. `nose` is recommended.
+
+To run the tests:
+
+    memcached -l 127.0.0.1 -p 55555 &
+    nosetests
+    fg
+    ^C
 
 [1]: https://github.com/esnme/ultramemcache
 [2]: http://www.tummy.com/Community/software/python-memcached/
 [3]: https://github.com/steeve/python-lz4
-[4]: https://github.com/mixpanel/memcache_client
+[4]: https://github.com/twitter/twemproxy
+[5]: robey.github.com/kestrel/
+[6]: https://github.com/wavii/darner
+[7]: https://github.com/couchbase/moxi

@@ -1,0 +1,89 @@
+# Request header:
+    typedef union {
+        struct {
+            uint8_t magic;
+            uint8_t opcode;
+            uint16_t keylen;
+            uint8_t extlen;
+            uint8_t datatype;
+            uint16_t reserved;
+            uint32_t bodylen;
+            uint32_t opaque;
+            uint64_t cas;
+        } request;
+        uint8_t bytes[24];
+    } protocol_binary_request_header;
+
+# Response header:
+    typedef union {
+        struct {
+            uint8_t magic;
+            uint8_t opcode;
+            uint16_t keylen;
+            uint8_t extlen;
+            uint8_t datatype;
+            uint16_t status;
+            uint32_t bodylen;
+            uint32_t opaque;
+            uint64_t cas;
+        } response;
+        uint8_t bytes[24];
+    } protocol_binary_response_header;
+
+# get extra data
+    typedef union {
+        struct {
+            protocol_binary_response_header header;
+            struct {
+                uint32_t flags;
+            } body;
+        } message;
+        uint8_t bytes[sizeof(protocol_binary_response_header) + 4];
+    } protocol_binary_response_get;
+
+# set/add/replace extra data
+    typedef union {
+        struct {
+            protocol_binary_request_header header;
+            struct {
+                uint32_t flags;
+                uint32_t expiration;
+            } body;
+        } message;
+        uint8_t bytes[sizeof(protocol_binary_request_header) + 8];
+    } protocol_binary_request_set;
+
+# incr/decr request extra data
+    typedef union {
+        struct {
+            protocol_binary_request_header header;
+            struct {
+                uint64_t delta;
+                uint64_t initial;
+                uint32_t expiration;
+            } body;
+        } message;
+        uint8_t bytes[sizeof(protocol_binary_request_header) + 20];
+    } protocol_binary_request_incr;
+
+# incr/decr response extra
+    typedef union {
+        struct {
+            protocol_binary_response_header header;
+            struct {
+                uint64_t value;
+            } body;
+        } message;
+        uint8_t bytes[sizeof(protocol_binary_response_header) + 8];
+    } protocol_binary_response_incr;
+
+# flush extra data
+    typedef union {
+        struct {
+            protocol_binary_request_header header;
+            struct {
+                uint32_t expiration;
+            } body;
+        } message;
+        uint8_t bytes[sizeof(protocol_binary_request_header) + 4];
+    } protocol_binary_request_flush;

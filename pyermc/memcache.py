@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 
-# Copyright 2012 PlayHaven, Inc.
+# Copyright 2013 Medium Entertainment, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,13 +21,12 @@
 # Inspiration from memcache_client:
 #   https://github.com/mixpanel/memcache_client
 
-import umemcache
 import lz4
 import cPickle as pickle
 import logging
 import socket
-import errno
 import re
+from . import driver
 
 
 CONNECT_TIMEOUT = 3
@@ -46,6 +45,14 @@ class MemcacheValueError(Exception):
     pass
 
 
+class MemcacheDriverException(Exception):
+    pass
+
+
+class MemcacheSocketException(Exception):
+    pass
+
+
 class Client(object):
     # bitfields
     _FLAG_PICKLE     = 1<<0
@@ -55,14 +62,14 @@ class Client(object):
     # regex for key validation
     _valid_key_re = re.compile('^[^\x00-\x20\x7f\n\s]+$')
 
-    def __init__(self, host, port,
+    def __init__(self, host='127.0.0.1', port=11211,
             connect_timeout=CONNECT_TIMEOUT,
             timeout=SOCKET_TIMEOUT,
             max_key_length=MAX_KEY_LENGTH,
             max_value_length=MAX_VALUE_LENGTH,
             pickle=True, disable_nagle=True,
-            cache_cas=False, error_as_miss=False):
-        super(Client, self).__init__()
+            cache_cas=False, error_as_miss=False,
+            client_driver=driver.DEFAULT_DRIVER):
         self.host = host
         self.port = port
 
@@ -77,63 +84,48 @@ class Client(object):
         self.error_as_miss = error_as_miss
 
         self._client = None
-        self._connected = False
         self.cas_ids = {}
+        self._driver = None
+
+        if client_driver and issubclass(client_driver, driver.Driver):
+            self._driver = client_driver
+            logging.debug(
+                "Using driver: %s.%s",
+                getattr(self._driver, '__module__', ""),
+                getattr(self._driver, "__name__", ""))
+        else:
+            raise TypeError('Bad driver provided')
+        self._init_driver()
+
+    def __del__(self):
+        ## try to close/cleanup on GC/delete
+        try:
+            if self._client:
+                self.close()
+        except:
+            pass
+
+    def _init_driver(self):
+        self._client = self._driver(
+            self.host, self.port,
+            timeout=self.timeout,
+            connect_timeout=self.connect_timeout,
+            disable_nagle=self.disable_nagle)
 
     def connect(self, reconnect=False):
-        if self.is_connected():
-            if not reconnect:
-                return
-            self.close()
+        if not self._client:
+            self._init_driver()
+        self._client.connect(reconnect=reconnect)
 
-        self._client = umemcache.Client("%s:%s" % (self.host, self.port))
-        self._client.sock.settimeout(self.connect_timeout)
-        self._client.connect()
-        self._client.sock.settimeout(self.timeout)
-        if self.disable_nagle:
-            # disable nagle, as memcache deals with lots of small packets.
-            self._client.sock.setsockopt(
-                socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        self._connected = True
+    def is_connected(self):
+        if not self._client:
+            return False
+        return self._client.is_connected()
 
     def close(self):
         if self._client:
             self._client.close()
         self._client = None
-        self._connected = False
-
-    def is_connected(self):
-        if not self._connected:
-            return False
-        if not self._client:
-            self._connected = False
-            return False
-        if not hasattr(self._client, 'sock'):
-            self._connected = False
-            self._client = None
-            return False
-        if not self._client.is_connected():
-            self._connected = False
-            self._client = None
-            return False
-        return True
-        ## this is arguably safer, but it slows things down a
-        ## non-insignificant amount. Consider putting this into pooling
-        ## code instead of per-memcache call
-        #try:
-        #    self._client.sock.settimeout(0)
-        #    self._client.sock.recv(1, socket.MSG_PEEK)
-        #    # if recv didn't raise, then the socket was closed or there
-        #    # is junk in the read buffer, either way, close
-        #    self.close()
-        #except socket.error as e:
-        #    # this is expected if the socket is still open
-        #    if e.errno == errno.EAGAIN:
-        #        self._client.sock.settimeout(self.timeout)
-        #        return True
-        #    else:
-        #        self.close()
-        #return False
 
     # alias close to disconnect
     disconnect = close
@@ -148,22 +140,30 @@ class Client(object):
     ## misc operations
     ##
     def stats(self):
-        return self._send_cmd("stats")
+        return self._call_driver("stats")
 
     def version(self):
-        return self._send_cmd("version")
+        return self._call_driver("version")
 
-    def incr(self, key, increment=1):
-        return self._send_cmd("incr", key, increment)
+    def incr(self, key, delta=1):
+        if not isinstance(delta, int):
+            raise TypeError("An integer is required")
+        if delta < 0:
+            return self._call_driver("decr", key, abs(delta))
+        return self._call_driver("incr", key, delta)
 
-    def decr(self, key, decrement=1):
-        return self._send_cmd("decr", key, decrement)
+    def decr(self, key, delta=1):
+        if not isinstance(delta, int):
+            raise TypeError("An integer is required")
+        if delta < 0:
+            return self._call_driver("incr", key, abs(delta))
+        return self._call_driver("decr", key, delta)
 
     def delete(self, key):
-        return self._send_cmd("delete", key)
+        return self._call_driver("delete", key)
 
     def flush_all(self):
-        return self._send_cmd("flush_all")
+        return self._call_driver("flush_all")
 
     ##
     ## set operations
@@ -310,11 +310,11 @@ class Client(object):
                 args = (key, sval, self.cas_ids[key], time, flags)
             else:
                 cmd = 'set'  # key not in cas_ids, so just do a set instead
-        return self._send_cmd(cmd, *args)
+        return self._call_driver(cmd, *args)
 
     def _get(self, cmd, key):
         key = self.check_key(key)
-        response = self._send_cmd(cmd, key)
+        response = self._call_driver(cmd, key)
         if not response:
             return None
 
@@ -333,7 +333,7 @@ class Client(object):
 
     def _get_multi(self, cmd, keys):
         keys = [self.check_key(k) for k in keys]
-        response = self._send_cmd(cmd, keys)
+        response = self._call_driver(cmd, keys)
         if not response:
             return {}
 
@@ -349,13 +349,22 @@ class Client(object):
             retvals[k] = val
         return retvals
 
-    def _send_cmd(self, cmd, *args):
-        if not self.is_connected():
+    def _call_driver(self, cmd, *args):
+        if not self._client:
             self.connect()
         try:
             return getattr(self._client, cmd)(*args)
+        except socket.error as e:
+            self.close()
+            if self.error_as_miss:
+                return None
+            ## reraise wrapped, but with original exception included in args
+            ## to provide for callers to introspect.
+            raise MemcacheSocketException(str(e), e)
         except (RuntimeError, IOError) as e:
             self.close()
             if self.error_as_miss:
                 return None
-            raise
+            ## reraise wrapped, but with original exception included in args
+            ## to provide for callers to introspect.
+            raise MemcacheDriverException(str(e), e)
