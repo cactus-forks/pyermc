@@ -15,6 +15,11 @@ design goal, however.
 *   gevent/eventlet compatible (ultramemcache uses python socket)
 *   uses [lz4][3] for compression instead of gzip (fast)
 
+## Benchmarks
+
+To run the benchmark script, you will need to pip install python-memcached
+and manually clone mixpanel's [memcache_client][4] repo.
+
 ## Usage
 
 ![ermahgerd](http://i2.kym-cdn.com/photos/images/original/000/333/003/0d3.jpg)
@@ -23,4 +28,4 @@ design goal, however.
 [1]: https://github.com/esnme/ultramemcache
 [2]: http://www.tummy.com/Community/software/python-memcached/
 [3]: https://github.com/steeve/python-lz4
-
+[4]: https://github.com/mixpanel/memcache_client

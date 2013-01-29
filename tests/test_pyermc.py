@@ -268,7 +268,6 @@ class TestPyErMC(unittest.TestCase):
         self.assertDictEqual(data, data2)
         data3 = {x:y+1 for x,y in data2.items()}
         for k,v in data3.iteritems():
-            print self.client.cas(k, v)
             z = self.client.get(k)
             self.assertEqual(v, z)
         data4 = self.client.get_multi(data3.keys())
