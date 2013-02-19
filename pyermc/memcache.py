@@ -508,7 +508,7 @@ class Client(object):
                 val = pickle.dumps(val)
 
         lv = len(val)
-        #  silently do not store if value length exceeds maximum
+        #  do not store if value length exceeds maximum
         if self.max_value_length and lv > self.max_value_length:
             raise MemcacheValueError(
                 "Value is larger than configured max_value_length. %d > %d" %
