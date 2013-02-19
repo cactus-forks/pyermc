@@ -113,16 +113,31 @@ class Client(object):
             disable_nagle=self.disable_nagle)
 
     def connect(self, reconnect=False):
+        """
+        Connects the backend to the server
+
+        Keyword arguments:
+          reconnect -- Reconnect to the server if connected.
+                       (defaut: False)
+        """
         if not self._client:
             self._init_driver()
         self._client.connect(reconnect=reconnect)
 
     def is_connected(self):
+        """
+        Checks to see if the backend is connected
+
+        returns bool
+        """
         if not self._client:
             return False
         return self._client.is_connected()
 
     def close(self):
+        """
+        Closes connection to the backend
+        """
         if self._client:
             self._client.close()
         self._client = None
@@ -131,21 +146,48 @@ class Client(object):
     disconnect = close
 
     def reset_client(self):
+        """
+        Reset internal client state
+        """
         self.reset_cas()
 
     def reset_cas(self):
+        """
+        Reset internal CAS associations
+        """
         self.cas_ids = {}
 
     ##
     ## misc operations
     ##
     def stats(self):
+        """
+        Get stats from backend server
+
+        returns dict
+        """
         return self._call_driver("stats")
 
     def version(self):
+        """
+        Get version from backend server
+
+        returns string
+        """
         return self._call_driver("version")
 
     def incr(self, key, delta=1):
+        """
+        Increment a stored number identified by `key`
+
+        Arguments:
+         key   -- string key
+
+        Keyword Arguments:
+         delta -- value to increment by. default:1
+
+        returns int or None (on failure)
+        """
         if not isinstance(delta, int):
             raise TypeError("An integer is required")
         if delta < 0:
@@ -153,6 +195,17 @@ class Client(object):
         return self._call_driver("incr", key, delta)
 
     def decr(self, key, delta=1):
+        """
+        Decrement a stored number identified by `key`
+
+        Arguments:
+         key   -- string key
+
+        Keyword Arguments:
+         delta -- value to decrement by. default:1
+
+        returns int or None (on failure)
+        """
         if not isinstance(delta, int):
             raise TypeError("An integer is required")
         if delta < 0:
@@ -160,33 +213,135 @@ class Client(object):
         return self._call_driver("decr", key, delta)
 
     def delete(self, key):
+        """
+        Delete a stored value identified by `key`
+
+        Arguments:
+          key  -- string key
+
+        returns bool
+        """
         return self._call_driver("delete", key)
 
     def flush_all(self):
+        """
+        Flushes all stored values in backend server
+
+        returns bool
+        """
         return self._call_driver("flush_all")
 
     ##
     ## set operations
     ##
     def add(self, key, val, time=0, min_compress_len=0):
+        """
+        Sets a value to server identified by `key`, iff it does not
+        already exist.
+
+        Arguments:
+          key -- string key
+          val -- value to set
+
+        Keyword arguments:
+          time -- how far into the future to expire. default:0 (means never)
+          min_compress_length -- minimum string size to attempt to compress.
+                                 default:0 (0 means never compress)
+
+        returns bool
+        """
         return self._set("add", key, val, time, min_compress_len)
 
     def append(self, key, val, time=0, min_compress_len=0):
+        """
+        Appends `val` to stored data at `key`, iff `key` exists.
+
+        Arguments:
+          key -- string key
+          val -- value to set
+
+        Keyword arguments:
+          time -- how far into the future to expire. default:0 (means never)
+          min_compress_length -- minimum string size to attempt to compress.
+                                 default:0 (0 means never compress)
+
+        returns bool
+        """
         return self._set("append", key, val, time, min_compress_len)
 
     def prepend(self, key, val, time=0, min_compress_len=0):
+        """
+        Prepends `val` to stored data at `key`, iff `key` exists.
+
+        Arguments:
+          key -- string key
+          val -- value to set
+
+        Keyword arguments:
+          time -- how far into the future to expire. default:0 (means never)
+          min_compress_length -- minimum string size to attempt to compress.
+                                 default:0 (0 means never compress)
+
+        returns bool
+        """
         return self._set("prepend", key, val, time, min_compress_len)
 
     def replace(self, key, val, time=0, min_compress_len=0):
+        """
+        Replaces currently stored value at `key` with `val`, iff `key` exists.
+
+        Arguments:
+          key -- string key
+          val -- value to set
+
+        Keyword arguments:
+          time -- how far into the future to expire. default:0 (means never)
+          min_compress_length -- minimum string size to attempt to compress.
+                                 default:0 (0 means never compress)
+
+        returns bool
+        """
         return self._set("replace", key, val, time, min_compress_len)
 
     def set(self, key, val, time=0, min_compress_len=0):
+        """
+        Sets stored value at `key` to `val`
+
+        Arguments:
+          key -- string key
+          val -- value to set
+
+        Keyword arguments:
+          time -- how far into the future to expire. default:0 (means never)
+          min_compress_length -- minimum string size to attempt to compress.
+                                 default:0 (0 means never compress)
+
+        returns bool
+        """
         return self._set("set", key, val, time, min_compress_len)
 
     #def set_multi(self):
     #    ## unsupport!
 
     def cas(self, key, val, time=0, min_compress_len=0):
+        """
+        Check-and-Set sets stored value at `key` to `val`, iff it has not
+        been modified since it was retrieved via `gets` or `gets_multi`.
+
+        If `self.cache_cas` is not set to true (during class creation), then
+        this effectively becomes a `set`.
+
+        Arguments:
+          key -- string key
+          val -- value to set
+
+        Keyword arguments:
+          time -- how far into the future to expire. default:0 (means never)
+          min_compress_length -- minimum string size to attempt to compress.
+                                 default:0 (0 means never compress)
+
+        returns bool
+        """
         return self._set("cas", key, val, time, min_compress_len)
 
     ##
@@ -208,6 +363,15 @@ class Client(object):
     ## data massaging methods
     ##
     def check_key(self, key):
+        """
+        Checks key for conformance, and encoding.
+
+        Arguments:
+          key -- string key
+
+        returns string -- sanitized key
+        raises MemcacheKeyError -- on bad key
+        """
         if not key:
             raise MemcacheKeyError("Key is None")
         if not isinstance(key, str):
