@@ -54,6 +54,9 @@ class MemcacheSocketException(Exception):
 
 
 class Client(object):
+    """
+    Object representing a connection to a backend memcache protocol driver.
+    """
     # bitfields
     _FLAG_PICKLE     = 1<<0
     _FLAG_INTEGER    = 1<<1
@@ -70,6 +73,42 @@ class Client(object):
             pickle=True, disable_nagle=True,
             cache_cas=False, error_as_miss=False,
             client_driver=driver.DEFAULT_DRIVER):
+        """
+        Create a new Client object connecting to the host and port.
+
+        Keyword arguments:
+          host             -- host to connect to
+                              default: "127.0.0.1"
+          port             -- port to connect to
+                              default: 11211
+          connect_timeout  -- how long to wait trying to connect
+                              default: CONNECT_TIMEOUT
+          timeout          -- how long to wait for a given protocol response
+                              default: SOCKET_TIMEOUT
+          max_key_length   -- max key size server will accept
+                              defaut: MAX_KEY_LENGTH
+          max_value_length -- max value size server will accept
+                              defaut: MAX_VALUE_LENGTH
+          pickle           -- whether to support pickling objects or not
+                              default: True
+          disable_nagle    -- disable Nagle's algorithm for the tcp socket.
+                              May help improve performance in some cases.
+                              default: False
+          cache_cas        -- whether `gets`/`gets_multi` commands store
+                              CAS_ID internally, and `cas` commands perform
+                              `cas` or simply fallback to `set`.
+                              default: False
+          error_as_miss    -- try to simulate python-memcache driver behavior
+                              where a driver/socket fault simply returns
+                              a `None`, and masks all errors.
+                              default: False
+         client_driver     -- backend driver class reference that must be a
+                              a subclass of `pyermc.driver.Driver`.
+                              default: pyermc.driver.TextProtoDriver
+         """
+
+
+
         self.host = host
         self.port = port
 
@@ -328,8 +367,8 @@ class Client(object):
         Check-and-Set sets stored value at `key` to `val`, iff it has not
         been modified since it was retrieved via `gets` or `gets_multi`.
 
-        If `self.cache_cas` is not set to true (during class creation), then
-        this effectively becomes a `set`.
+        If `cache_cas=True` was not passed to init, then this effectively
+        becomes a `set`.
 
         Arguments:
           key -- string key
@@ -348,15 +387,55 @@ class Client(object):
     ## get operations
     ##
     def get(self, key):
+        """
+        gets a stored value at `key`
+        The stored value is unpacked.
+
+        Arguments:
+          key -- string key
+
+        returns int or str or long or object or None
+        """
         return self._get("get", key)
 
     def get_multi(self, keys):
+        """
+        gets a stored value for each key in `keys`
+        The stored values are unpacked.
+
+        Arguments:
+          keys -- iterable of str
+
+        returns dict -- dict key is matching key from `keys`.
+                        dict[key] is int or str or long or object or None.
+        """
         return self._get_multi('get_multi', keys)
 
     def gets(self, key):
+        """
+        gets a stored value at `key`, and caches the CAS_ID if
+        `cache_cas=True` was passed to init.
+        The stored value is unpacked.
+
+        Arguments:
+          key -- string key
+
+        returns int or str or long or object or None
+        """
         return self._get("gets", key)
 
     def gets_multi(self, keys):
+        """
+        gets a stored value for each key in `keys`, and caches the CAS_ID
+        for each key if `cache_cas=True` was passed to init.
+        The stored values are unpacked.
+
+        Arguments:
+          keys -- iterable of str
+
+        returns dict -- dict key is matching key from `keys`.
+                        dict[key] is int or str or long or object or None.
+        """
         return self._get_multi('gets_multi', keys)
 
     ##
