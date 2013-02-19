@@ -18,6 +18,7 @@ import sys
 import errno
 import socket
 
+
 class Driver(object):
     def is_connected(self):
         """
@@ -214,8 +215,8 @@ class Driver(object):
 
 
 class TCPDriver(Driver):
-    def __init__(self, host, port,
-            timeout, connect_timeout, disable_nagle=True):
+    def __init__(self, host, port, timeout, connect_timeout,
+                 disable_nagle=True):
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -240,7 +241,7 @@ class TCPDriver(Driver):
             self._sock.connect((self.host, self.port))
             self._sock.settimeout(self.timeout)
         except (socket.error, socket.timeout):
-            self._sock = None # don't want to hang on to bad socket
+            self._sock = None  # don't want to hang on to bad socket
             raise
 
         if self.disable_nagle:

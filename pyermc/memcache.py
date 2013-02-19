@@ -66,13 +66,13 @@ class Client(object):
     _valid_key_re = re.compile('^[^\x00-\x20\x7f\n\s]+$')
 
     def __init__(self, host='127.0.0.1', port=11211,
-            connect_timeout=CONNECT_TIMEOUT,
-            timeout=SOCKET_TIMEOUT,
-            max_key_length=MAX_KEY_LENGTH,
-            max_value_length=MAX_VALUE_LENGTH,
-            pickle=True, disable_nagle=True,
-            cache_cas=False, error_as_miss=False,
-            client_driver=driver.DEFAULT_DRIVER):
+                 connect_timeout=CONNECT_TIMEOUT,
+                 timeout=SOCKET_TIMEOUT,
+                 max_key_length=MAX_KEY_LENGTH,
+                 max_value_length=MAX_VALUE_LENGTH,
+                 pickle=True, disable_nagle=True,
+                 cache_cas=False, error_as_miss=False,
+                 client_driver=driver.DEFAULT_DRIVER):
         """
         Create a new Client object connecting to the host and port.
 
@@ -105,10 +105,7 @@ class Client(object):
          client_driver     -- backend driver class reference that must be a
                               a subclass of `pyermc.driver.Driver`.
                               default: pyermc.driver.TextProtoDriver
-         """
-
-
-
+        """
         self.host = host
         self.port = port
 

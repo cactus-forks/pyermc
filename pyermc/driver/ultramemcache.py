@@ -23,9 +23,10 @@ import umemcache
 import errno
 import socket
 
+
 class UMemcacheDriver(Driver):
-    def __init__(self, host, port,
-            timeout, connect_timeout, disable_nagle=True):
+    def __init__(self, host, port, timeout, connect_timeout,
+                 disable_nagle=True):
         self.host = host
         self.port = port
         self.timeout = timeout

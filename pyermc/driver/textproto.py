@@ -32,6 +32,7 @@ NOT_FOUND    = 'NOT_FOUND'
 CLIENT_ERROR = 'CLIENT_ERROR'
 SERVER_ERROR = 'SERVER_ERROR'
 
+
 class TextProtoDriver(TCPDriver):
     ###
     ### data readers

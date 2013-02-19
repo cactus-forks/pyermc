@@ -118,7 +118,7 @@ class BinaryProtoDriver(TCPDriver):
     ###
     ### helpful internal abstractions
     def _build_request(self, cmd, header_extra=None, opaque=0, cas=0,
-            key=None, value=None):
+                       key=None, value=None):
         extralen = 0
         if header_extra:
             extralen = len(header_extra)
@@ -148,8 +148,7 @@ class BinaryProtoDriver(TCPDriver):
     def _incrdecr(self, cmd, key, val, time):
         req = self._build_request(
             cmd, key=key,
-            header_extra=struct.pack('!QQL', val, 0, time),
-            )
+            header_extra=struct.pack('!QQL', val, 0, time))
         self._sendall(req)
 
         (magic, opcode, keylen, extlen, datatype, status,
@@ -222,8 +221,7 @@ class BinaryProtoDriver(TCPDriver):
     def _set(self, cmd, key, val, time, flags, cas=0):
         req = self._build_request(
             cmd, cas=cas, key=key, value=str(val),
-            header_extra=struct.pack('!LL', flags, time)
-            )
+            header_extra=struct.pack('!LL', flags, time))
         self._sendall(req)
 
         (magic, opcode, keylen, extlen,
