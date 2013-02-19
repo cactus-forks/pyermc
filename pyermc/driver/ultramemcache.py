@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Memcache Ultramemcache (umemcache) backend
+"""
+
 from .base import Driver
 import umemcache
 import errno
