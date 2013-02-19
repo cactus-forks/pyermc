@@ -29,7 +29,7 @@ pyermc is currently tested against python2.7.
 ## Features
 
 *   pickle support
-*   gevent/eventlet compatible (ultramemcache uses python socket)
+*   gevent/eventlet compatible (ultramemcache backend uses python socket too)
 *   uses [lz4][3] for compression instead of gzip (fast)
 *   selectable backend drivers
 
