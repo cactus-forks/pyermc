@@ -11,6 +11,7 @@ from pyermc import memcache
 from pyermc.driver import Driver
 from pyermc.driver.noop import NoopDriver
 
+
 class TestClient(unittest.TestCase):
     def test_init(self):
         client = memcache.Client('1.2.3.4', 5678, connect_timeout=11,
@@ -591,3 +592,93 @@ class TestClient(unittest.TestCase):
             self.assertEqual(result, {'key1': sentinel.received_value1,
                                       'key2': sentinel.received_value2})
             self.assertEqual(client.cas_ids, {})
+
+    def test_call_driver_connect(self):
+        """_call_driver() should connect if necessary.
+        """
+        def connect_side_effect():
+            client._client = mock.Mock()
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver)
+        old_connect = client.connect
+        client.connect = mock.Mock(side_effect=old_connect)
+        client._client = None
+        client._call_driver("version")
+        client.connect.assert_called()
+        client.connect.reset_mock()
+        client._call_driver("version")
+        client.connect.assert_not_called()
+
+    def test_call_driver_socket_error(self):
+        """_call_driver() should call close() and raise MemcacheSocketException
+        on socket.error.
+        """
+        err = socket.error('Mock socket.error')
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver)
+        client._client.version = mock.Mock(side_effect=err)
+        client.close = mock.Mock()
+        with self.assertRaisesRegexp(
+                memcache.MemcacheSocketException, 'Mock socket.error'):
+            client._call_driver('version')
+        client.close.assert_called()
+
+    def test_call_driver_socket_error_as_miss(self):
+        """_call_driver() should call close() and return None on socket.error
+        if error_as_miss is True.
+        """
+        err = socket.error('Mock socket.error')
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver,
+                                 error_as_miss=True)
+        client._client.version = mock.Mock(side_effect=err)
+        client.close = mock.Mock()
+        self.assertIsNone(client._call_driver('version'))
+        client.close.assert_called()
+
+    def test_call_driver_runtime_error(self):
+        """_call_driver() should call close() and raise MemcacheDriverException
+        on RuntimeError.
+        """
+        err = RuntimeError('Mock RuntimeError')
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver)
+        client._client.version = mock.Mock(side_effect=err)
+        client.close = mock.Mock()
+        with self.assertRaisesRegexp(
+                memcache.MemcacheDriverException, 'Mock RuntimeError'):
+            client._call_driver('version')
+        client.close.assert_called()
+
+    def test_call_driver_runtime_error_as_miss(self):
+        """_call_driver() should call close() and return None on RuntimeError
+        if error_as_miss is True.
+        """
+        err = RuntimeError('Mock RuntimeError')
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver,
+                                 error_as_miss=True)
+        client._client.version = mock.Mock(side_effect=err)
+        client.close = mock.Mock()
+        self.assertIsNone(client._call_driver('version'))
+        client.close.assert_called()
+
+    def test_call_driver_io_error(self):
+        """_call_driver() should call close() and raise MemcacheDriverException
+        on IOError.
+        """
+        err = IOError('Mock IOError')
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver)
+        client._client.version = mock.Mock(side_effect=err)
+        client.close = mock.Mock()
+        with self.assertRaisesRegexp(
+                memcache.MemcacheDriverException, 'Mock IOError'):
+            client._call_driver('version')
+        client.close.assert_called()
+
+    def test_call_driver_io_error_as_miss(self):
+        """_call_driver() should call close() and return None on IOError
+        error_as_miss is True.
+        """
+        err = IOError('Mock IOError')
+        client = memcache.Client('127.0.0.1', 11211, client_driver=NoopDriver,
+                                 error_as_miss=True)
+        client._client.version = mock.Mock(side_effect=err)
+        client.close = mock.Mock()
+        self.assertIsNone(client._call_driver('version'))
+        client.close.assert_called()
