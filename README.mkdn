@@ -38,15 +38,32 @@ pyermc is currently tested against python2.7.
 *   python-lz4
 *   ultramemcache (optional, required only for ultramemcache backend)
 
+## Driver Backends
+
+Current backends are:
+
+*   `driver.textproto.TextProtoDriver`  
+    This is the default backend, and speaks the memcache text protocol.
+
+*   `driver.binaryproto.BinaryProtoDriver`  
+    Speaks the memcache binary protocol.
+
+
+*   `driver.ultramemcache.UMemcacheDriver`  
+    Wraps the umemcache client.
+
 ## Usage
 
     >>> import pyermc
     # create client and connect
+    # note that the client_driver listed here is also the default.
+    # added to example just to show how to specify a driver manually
     >>> c = pyermc.Client(
     ...     host='127.0.0.1',
     ...     port=11211,
     ...     disable_nagle=True,
-    ...     cache_cas=True)
+    ...     cache_cas=True,
+    ...     client_driver=pyermc.driver.textproto.TextProtoDriver)
     # calling connect is option. if omitted, the client will connect
     # during first request.
     >>> c.connect()
