@@ -1,3 +1,4 @@
 pyermc.egg-info/
+dist/
 *.idea/
 *.py[co]
