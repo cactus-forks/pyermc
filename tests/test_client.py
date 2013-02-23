@@ -52,6 +52,15 @@ class TestClient(unittest.TestCase):
         self.assertEqual(memcache.Client._FLAG_LONG, 1<<2)
         self.assertEqual(memcache.Client._FLAG_COMPRESSED, 1<<3)
 
+    def test_getsock(self):
+        client = memcache.Client('127.0.0.1', 11211,
+                                 connect_timeout=sentinel.connect_timeout,
+                                 timeout=sentinel.timeout,
+                                 client_driver=NoopDriver)
+        client._client = sentinel._client
+        client._client.socket = sentinel.sock
+        self.assertIs(client.socket, sentinel.sock)
+
     def test_connect(self):
         client = memcache.Client('127.0.0.1', 11211,
                                  connect_timeout=sentinel.connect_timeout,

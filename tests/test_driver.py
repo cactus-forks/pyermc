@@ -46,6 +46,10 @@ class TestDriver(unittest.TestCase):
             with self.assertRaises(NotImplementedError):
                 method(*args)
 
+        # test the socket propery too
+        with self.assertRaises(NotImplementedError):
+            s = driver.socket
+
 
 class TestTCPDriver(unittest.TestCase):
     @mock.patch('pyermc.driver.base.socket.socket')
@@ -103,6 +107,13 @@ class TestTCPDriver(unittest.TestCase):
         driver._sendall(sentinel.data)
         driver.connect.assert_not_called()
         driver._sock.sendall.assert_called_width(sentinel.data)
+
+    def test_get_socket(self):
+        """socket property should return underlying socket
+        """
+        driver = TCPDriver('127.0.0.1', 55555, 1, 1)
+        driver._sock = sentinel.sock
+        self.assertEqual(driver.socket, sentinel.sock)
 
 
 class TestBinaryProtoDriver(unittest.TestCase):
