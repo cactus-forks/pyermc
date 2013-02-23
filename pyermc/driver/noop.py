@@ -34,6 +34,10 @@ class NoopDriver(Driver):
     def is_connected(self):
         return True
 
+    @property
+    def socket(self):
+        return None
+
     def close(self):
         pass
 

@@ -102,7 +102,7 @@ class Client(object):
                               where a driver/socket fault simply returns
                               a `None`, and masks all errors.
                               default: False
-         client_driver     -- backend driver class reference that must be a
+          client_driver    -- backend driver class reference that must be a
                               a subclass of `pyermc.driver.Driver`.
                               default: pyermc.driver.TextProtoDriver
         """
@@ -147,6 +147,12 @@ class Client(object):
             timeout=self.timeout,
             connect_timeout=self.connect_timeout,
             disable_nagle=self.disable_nagle)
+
+    @property
+    def socket(self):
+        if self._client:
+            return self._client.socket
+        return None
 
     def connect(self, reconnect=False):
         """
