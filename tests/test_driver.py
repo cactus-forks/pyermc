@@ -46,7 +46,7 @@ class TestDriver(unittest.TestCase):
             with self.assertRaises(NotImplementedError):
                 method(*args)
 
-        # test the socket propery too
+        # test the socket property too
         with self.assertRaises(NotImplementedError):
             s = driver.socket
 
