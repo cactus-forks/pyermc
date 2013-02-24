@@ -84,6 +84,12 @@ class UMemcacheDriver(Driver):
         #        self.close()
         #return False
 
+    @property
+    def socket(self):
+        if self._client:
+            return getattr(self._client, 'sock', None)
+        return None
+
     def close(self):
         if self._client:
             self._client.close()

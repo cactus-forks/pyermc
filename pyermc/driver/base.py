@@ -41,6 +41,16 @@ class Driver(object):
         """
         raise NotImplementedError
 
+    @property
+    def socket(self):
+        """
+        should return the underlying socket, if present.
+        None if not present (driver specific).
+
+        returns: socket.socket or None
+        """
+        raise NotImplementedError
+
     def close(self):
         """
         disconnect
@@ -278,6 +288,10 @@ class TCPDriver(Driver):
         #    else:
         #        self.close()
         #return False
+
+    @property
+    def socket(self):
+        return self._sock
 
     def close(self):
         if self._sock:
