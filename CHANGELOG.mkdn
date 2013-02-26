@@ -1,6 +1,10 @@
 Changelog
 =========
 
+## 0.0.2 2013-02-26
+
+*   expose socket as a property, to assist with pooling code
+
 ## 0.0.1 2013-02-19
 
 *   initial public release
