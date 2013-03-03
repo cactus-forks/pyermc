@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+import os
 import unittest
 import pyermc
 import inspect
@@ -9,7 +10,7 @@ import socket
 
 
 MEMCACHED_HOST='127.0.0.1'
-MEMCACHED_PORT=55555
+MEMCACHED_PORT=int(os.environ.get('MEMCACHED_TEST_PORT', 55555))
 MEMCACHED_RUNNING = False
 
 def memcached_running():
