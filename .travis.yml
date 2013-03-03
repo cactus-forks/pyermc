@@ -1,0 +1,10 @@
+language: python
+python:
+    - "2.7"
+install:
+    - pip install --use-mirrors setuptools lz4 umemcache
+script: nosetests
+services:
+    - memcache
+env:
+    - MEMCACHED_TEST_PORT=11211
