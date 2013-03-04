@@ -10,5 +10,5 @@ env:
     - MEMCACHED_TEST_PORT=11211
 notifications:
     email:
-        - secure: "vM5PKioaRsERd2opmgC9T4OqtowL8ELR0DfonCKMaQ6++gWkt9kobbUdJWjE\nCBRSrAZuj0fk2zywmvVmCjjNZZn1q2t15F0WePhuU0gdkrqJSVTdR+XIik3y\n09lJcSUKV0mfTBsYZBxtiQ9gMnCgH/tRdcuSP1LbV2q/lKbhF9w="
-        - secure: "zjrpmAtw0379deoCZbcX2JHSQm8CVqsiJmkBIy8cH1wQytLPh+1oIsTPLJz0\nYAwbEzXoxdrRXssD/JuBMvJTN1l9ARJS7hYKCFMZ2UzFqoVoBidY55jXslHZ\nEe5AX+xa7D+bK007EVg4orH3v+6TyAfb/wZmQsRR2qFLJ2Gh/GQ="
+        - secure: "K74ZJjYpCpv/c3h//NePxWOwN0XHEGwTXRRaRqbn35C31y7TNCAGVsTdx6QW\n2x894FFaVxw7Ry2PW6eXjVYQOxsIUOf8U36P6xDzBf/c+dhtC7gIIlAPDsQr\nJWnau0DJ3PE2unHr/f7T0vZEqWx/Fxeg/WrtaMZYbEOonPB2Kcg="
+        - secure: "JIUUO5gblEkZl61YFdnMygcXjACVCy19nMVMPuIbO4kshGhfhWc91gqkNJ/q\n/Vvr1UeaHFxwlZGTIQowKbMGFKRs6StfACvrdMdIWXH1o1k1Jj4ZuwxX8WWe\nYNsQqchhwpr8n9tcvVQxCoH+mtuu/9cqK1n3Q4m1HzAC2JUjqno="
