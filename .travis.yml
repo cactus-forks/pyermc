@@ -10,4 +10,7 @@ env:
     - MEMCACHED_TEST_PORT=11211
 notifications:
     email:
-        - secure: "VBm3Y36yM/lMAJfJLlL11Tk63Uk1XF3uPDJjkSfvQVN6I8/dzhjiTdK1C84p\n2a1TuDDIztRFn3NJcoeT1Y2cITFyFcf+Wzn57zz+w5T+QMCwpCy+ZWo0yK7L\nF+nyVJDxj04V/HifBaMPc/axvOQBLCHtubKQWO7XTAO9Sfzt6cc="
+        recipients:
+            - secure: "VBm3Y36yM/lMAJfJLlL11Tk63Uk1XF3uPDJjkSfvQVN6I8/dzhjiTdK1C84p\n2a1TuDDIztRFn3NJcoeT1Y2cITFyFcf+Wzn57zz+w5T+QMCwpCy+ZWo0yK7L\nF+nyVJDxj04V/HifBaMPc/axvOQBLCHtubKQWO7XTAO9Sfzt6cc="
+            - secure: "5Kt0XtBYu4oHwJgLiXAEFP/pC6awTErj5SMbzMrE2wY8tnFZGHTBg7LEW4oH\n4fAizXd7vZiYREeb9popwjxsEfhwBFuputXbIOIQWxY7VZxxJohNoB+7xRyL\n7sk5PmS0DVuRzhwiGWgTMODCQI4d5U3R3EBggMKEX32l1C9B6DY="
+        on_success: always
