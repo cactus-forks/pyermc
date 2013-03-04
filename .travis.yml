@@ -8,3 +8,7 @@ services:
     - memcache
 env:
     - MEMCACHED_TEST_PORT=11211
+notifications:
+    email:
+        - secure: "vM5PKioaRsERd2opmgC9T4OqtowL8ELR0DfonCKMaQ6++gWkt9kobbUdJWjE\nCBRSrAZuj0fk2zywmvVmCjjNZZn1q2t15F0WePhuU0gdkrqJSVTdR+XIik3y\n09lJcSUKV0mfTBsYZBxtiQ9gMnCgH/tRdcuSP1LbV2q/lKbhF9w="
+        - secure: "zjrpmAtw0379deoCZbcX2JHSQm8CVqsiJmkBIy8cH1wQytLPh+1oIsTPLJz0\nYAwbEzXoxdrRXssD/JuBMvJTN1l9ARJS7hYKCFMZ2UzFqoVoBidY55jXslHZ\nEe5AX+xa7D+bK007EVg4orH3v+6TyAfb/wZmQsRR2qFLJ2Gh/GQ="
