@@ -55,5 +55,10 @@ setup(
     extras_require={
         'umemcache_driver': ['umemcache']
     },
+    tests_require=[
+        'mock',
+        'nose',
+        'unittest2',
+    ],
     zip_safe=False,
 )
