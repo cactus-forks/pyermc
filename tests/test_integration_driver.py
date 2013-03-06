@@ -1,13 +1,18 @@
 # -*- coding: utf8 -*-
 
 import os
-import unittest
+import sys
 import pyermc
 import inspect
 import struct
 import copy
 import socket
-
+## we use some test harness stuff from python2.7.
+## if not on 2.7, try importing unittest2 for compat
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 MEMCACHED_HOST='127.0.0.1'
 MEMCACHED_PORT=int(os.environ.get('MEMCACHED_TEST_PORT', 55555))
@@ -300,7 +305,7 @@ class _IntegrationBase(unittest.TestCase):
 
     def test_get_multi(self):
         self.client.flush_all()
-        data = {'test_get_multi_%s'%x:x for x in xrange(10)}
+        data = dict(('test_get_multi_%s'%x,x) for x in xrange(10))
 
         for k,v in data.iteritems():
             self.client.set(k, v)
@@ -311,7 +316,7 @@ class _IntegrationBase(unittest.TestCase):
         self.assertDictEqual(data, data2)
 
         ## test some junk
-        data = {'test_get_multi_%s_junk'%x:x for x in xrange(10)}
+        data = dict(('test_get_multi_%s_junk'%x,x) for x in xrange(10))
         data2 = self.client.get_multi(data.keys())
         self.assertDictEqual(data2, {})
 
@@ -320,7 +325,7 @@ class _IntegrationBase(unittest.TestCase):
         self.client.reset_client()
         self.client.cache_cas = True
 
-        data = {'test_gets_multi_%s'%x:x for x in xrange(3)}
+        data = dict(('test_gets_multi_%s'%x,x) for x in xrange(3))
 
         for k,v in data.iteritems():
             self.client.set(k, v)
@@ -329,7 +334,7 @@ class _IntegrationBase(unittest.TestCase):
 
         data2 = self.client.gets_multi(data.keys())
         self.assertDictEqual(data, data2)
-        data3 = {x:y+1 for x,y in data2.items()}
+        data3 = dict((x,y+1) for x,y in data2.items())
         for k,v in data3.iteritems():
             self.client.cas(k, v)
             z = self.client.get(k)

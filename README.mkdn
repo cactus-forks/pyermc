@@ -158,7 +158,10 @@ To run the benchmarks:
 Similar to benchmarks, a memcached instance running on localhost and port 55555
 is needed. If not present, integration tests will be skipped. The tests perform
 `flush_all` at various stages, so ensure no valuable data is stored in the test
-instance. `nose` is recommended.
+instance. `nose` is recommended. `mock` is required.
+
+If you are running python2.6, then `unittest2` is also required, as we use some
+python2.7 specific unit test methods.
 
 To run the tests:
 
