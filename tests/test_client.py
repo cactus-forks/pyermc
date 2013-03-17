@@ -1,8 +1,8 @@
 # -*- coding: utf8 -*-
 
+import sys
 import lz4
 import pickle
-import unittest
 import mock
 import errno
 import socket
@@ -10,6 +10,12 @@ from mock import sentinel
 from pyermc import memcache
 from pyermc.driver import Driver
 from pyermc.driver.noop import NoopDriver
+## we use some test harness stuff from python2.7.
+## if not on 2.7, try importing unittest2 for compat
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
 
 
 class TestClient(unittest.TestCase):

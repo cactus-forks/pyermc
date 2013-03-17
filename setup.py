@@ -38,22 +38,28 @@ setup(
     url='https://github.com/playhaven/pyermc',
     license='Apache License, Version 2.0',
     packages=find_packages(),
-    install_requires=[
-        'setuptools',
-        'lz4'
-    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 2.6',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: Apache Software License',
     ],
+    install_requires=[
+        'setuptools',
+        'lz4'
+    ],
     extras_require={
         'umemcache_driver': ['umemcache']
     },
+    tests_require=[
+        'mock',
+        'nose',
+        'unittest2',
+    ],
     zip_safe=False,
 )

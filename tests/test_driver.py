@@ -4,15 +4,22 @@ unit tests (mostly negative) for code paths that aren't covered by
 the integration tests.
 """
 
+import sys
 import mock
 import socket
 import struct
-import unittest
 from mock import sentinel
 from pyermc.driver import binaryproto, textproto
 from pyermc.driver.base import Driver, TCPDriver
 from pyermc.driver.binaryproto import BinaryProtoDriver
 from pyermc.driver.textproto import TextProtoDriver
+## we use some test harness stuff from python2.7.
+## if not on 2.7, try importing unittest2 for compat
+if sys.version_info < (2, 7):
+    import unittest2 as unittest
+else:
+    import unittest
+
 
 
 class TestDriver(unittest.TestCase):
