@@ -149,14 +149,14 @@ class TextProtoDriver(TCPDriver):
 
     def get(self, key):
         resp = self._get('get', key, cas=False)
-        if resp and key in resp:
-            return resp[key]
+        if resp:
+            return resp.popitem()[1]
         return None
 
     def gets(self, key):
         resp = self._get('gets', key, cas=True)
-        if resp and key in resp:
-            return resp[key]
+        if resp:
+            return resp.popitem()[1]
         return None
 
     def get_multi(self, keys):
