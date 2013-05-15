@@ -508,7 +508,7 @@ class Client(object):
         else:
             if self.pickle:
                 flags |= Client._FLAG_PICKLE
-                val = pickle.dumps(val)
+                val = pickle.dumps(val, pickle.HIGHEST_PROTOCOL)
 
         lv = len(val)
         #  do not store if value length exceeds maximum

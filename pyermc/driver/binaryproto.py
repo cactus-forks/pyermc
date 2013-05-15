@@ -316,15 +316,15 @@ class BinaryProtoDriver(TCPDriver):
     def get(self, key):
         keys = (key,)
         resp = self._get(keys, cas=False)
-        if resp and key in resp:
-            return resp[key]
+        if resp:
+            return resp.popitem()[1]
         return None
 
     def gets(self, key):
         keys = (key,)
         resp = self._get(keys, cas=True)
-        if resp and key in resp:
-            return resp[key]
+        if resp:
+            return resp.popitem()[1]
         return None
 
     def get_multi(self, keys):
