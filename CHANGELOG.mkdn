@@ -1,6 +1,16 @@
 Changelog
 =========
 
+## 0.0.4 2013-05-22
+
+*   default to pickle protocol 2
+*   compat fix for kestrel/darner and responses
+
+## 0.0.3 2013-03-17
+
+*   tests run/pass under python2.6
+*   socket set keepalive
+
 ## 0.0.2 2013-02-26
 
 *   expose socket as a property, to assist with pooling code
