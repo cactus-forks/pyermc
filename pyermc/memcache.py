@@ -23,7 +23,6 @@
 
 import lz4
 import cPickle as pickle
-import logging
 import socket
 import re
 from . import driver
@@ -70,8 +69,8 @@ class Client(object):
                  timeout=SOCKET_TIMEOUT,
                  max_key_length=MAX_KEY_LENGTH,
                  max_value_length=MAX_VALUE_LENGTH,
-                 pickle=True, disable_nagle=True,
-                 cache_cas=False, error_as_miss=False,
+                 pickle=True, pickle_proto=2,
+                 disable_nagle=True, cache_cas=False, error_as_miss=False,
                  client_driver=driver.DEFAULT_DRIVER):
         """
         Create a new Client object connecting to the host and port.
@@ -91,6 +90,7 @@ class Client(object):
                               defaut: MAX_VALUE_LENGTH
           pickle           -- whether to support pickling objects or not
                               default: True
+          pickle_proto     -- pickle protocol to use. default: 2 (highest)
           disable_nagle    -- disable Nagle's algorithm for the tcp socket.
                               May help improve performance in some cases.
                               default: False
@@ -115,6 +115,7 @@ class Client(object):
         self.max_value_length = max_value_length
 
         self.pickle = pickle
+        self.pickle_proto = pickle_proto
         self.disable_nagle = disable_nagle
         self.cache_cas = cache_cas
         self.error_as_miss = error_as_miss
@@ -125,10 +126,6 @@ class Client(object):
 
         if client_driver and issubclass(client_driver, driver.Driver):
             self._driver = client_driver
-            logging.debug(
-                "Using driver: %s.%s",
-                getattr(self._driver, '__module__', ""),
-                getattr(self._driver, "__name__", ""))
         else:
             raise TypeError('Bad driver provided')
         self._init_driver()
@@ -508,7 +505,7 @@ class Client(object):
         else:
             if self.pickle:
                 flags |= Client._FLAG_PICKLE
-                val = pickle.dumps(val, pickle.HIGHEST_PROTOCOL)
+                val = pickle.dumps(val, self.pickle_proto)
 
         lv = len(val)
         #  do not store if value length exceeds maximum

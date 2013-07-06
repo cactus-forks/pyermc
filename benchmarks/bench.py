@@ -37,7 +37,8 @@ pyermc_textproto_conn = pyermc.Client(
     MEMCACHED_HOST, MEMCACHED_PORT, client_driver=TextProtoDriver)
 pyermc_binaryproto_conn = pyermc.Client(
     MEMCACHED_HOST, MEMCACHED_PORT, client_driver=BinaryProtoDriver)
-memcache_conn = memcache.Client(['%s:%s' % (MEMCACHED_HOST, MEMCACHED_PORT)])
+memcache_conn = memcache.Client(
+    ['%s:%s' % (MEMCACHED_HOST, MEMCACHED_PORT)], pickleProtocol=2)
 # connect
 pyermc_conn.connect()
 pyermc_textproto_conn.connect()
