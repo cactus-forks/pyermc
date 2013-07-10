@@ -593,9 +593,9 @@ class Client(object):
         return retvals
 
     def _call_driver(self, cmd, *args):
-        if not self._client:
-            self.connect()
         try:
+            if not self._client:
+                self.connect()
             return getattr(self._client, cmd)(*args)
         except socket.error as e:
             self.close()
