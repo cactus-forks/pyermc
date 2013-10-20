@@ -19,6 +19,12 @@ import errno
 import socket
 
 
+try:
+    socket.SOL_TCP
+except AttributeError:
+    socket.SOL_TCP = socket.IPPROTO_TCP
+
+
 class Driver(object):
     def is_connected(self):
         """
@@ -254,10 +260,10 @@ class TCPDriver(Driver):
             self._sock = None  # don't want to hang on to bad socket
             raise
         # set socket for tcp keepalive
-        self._sock.setsockopt(socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         if self.disable_nagle:
             # disable nagle, as memcache deals with lots of small packets.
-            self._sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            self._sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
 
     def is_connected(self):
         if not self._sock:
