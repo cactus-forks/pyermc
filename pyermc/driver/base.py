@@ -19,12 +19,6 @@ import errno
 import socket
 
 
-try:
-    socket.SOL_TCP
-except AttributeError:
-    socket.SOL_TCP = socket.IPPROTO_TCP
-
-
 class Driver(object):
     def is_connected(self):
         """
