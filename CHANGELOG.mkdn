@@ -1,7 +1,7 @@
 Changelog
 =========
 
-## 0.0.6
+## 0.0.6 2013-10-21
 *   fix how the tcp keepalive socket option was being set
 
 ## 0.0.5 2013-08-10
