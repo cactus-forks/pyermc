@@ -5,6 +5,7 @@ python:
 install:
     - pip install --use-mirrors setuptools lz4 umemcache unittest2 mock nose
 script: nosetests
+sudo: false
 services:
     - memcache
 env:
