@@ -35,7 +35,7 @@ setup(
     version=__version__,
     description="python memcache interface",
     long_description=long_description,
-    url='https://github.com/playhaven/pyermc',
+    url='https://github.com/upsight/pyermc',
     license='Apache License, Version 2.0',
     packages=find_packages(),
     classifiers=[

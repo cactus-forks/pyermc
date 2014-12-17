@@ -4,7 +4,7 @@ pyermc
 pyermc is a memcache client library with support for "pluggable" driver
 backends.
 
-[![Build Status](https://travis-ci.org/playhaven/pyermc.png?branch=master)](https://travis-ci.org/playhaven/pyermc)
+[![Build Status](https://travis-ci.org/upsight/pyermc.png?branch=master)](https://travis-ci.org/upsight/pyermc)
 
 ## About
 
