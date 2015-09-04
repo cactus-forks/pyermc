@@ -1,12 +1,12 @@
+sudo: false
+services:
+    - memcache
 language: python
 python:
     - "2.7"
     - "2.6"
-install:
-    - pip install --use-mirrors setuptools lz4 unittest2 mock nose
+install: 
+    - pip install setuptools lz4 unittest2 mock nose
 script: nosetests
-sudo: false
-services:
-    - memcache
 env:
     - MEMCACHED_TEST_PORT=11211
