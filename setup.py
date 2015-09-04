@@ -54,12 +54,8 @@ setup(
         'lz4'
     ],
     extras_require={
-        'umemcache_driver': ['umemcache']
+        'umemcache_driver': ['umemcache'],
+        'tests': ['mock==1.0.1', 'nose', 'unittest2'],
     },
-    tests_require=[
-        'mock',
-        'nose',
-        'unittest2',
-    ],
     zip_safe=False,
 )

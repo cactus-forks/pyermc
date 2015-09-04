@@ -6,7 +6,5 @@ python:
     - "2.7"
     - "2.6"
 install: 
-    - pip install setuptools lz4 unittest2 mock nose
-script: nosetests
-env:
-    - MEMCACHED_TEST_PORT=11211
+    - pip install tox-travis
+script: tox
